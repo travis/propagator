@@ -3,6 +3,10 @@
   (:use propagator.core)
   (:require [clojure.contrib.math :as math]))
 
+(defn constant
+  [value]
+  (fn->propagator-constructor (constantly value)))
+
 (defmacro defop
   [name f prop-constructor-name]
   `(do
@@ -19,7 +23,7 @@
   + clojure.core/+ adder
   - clojure.core/- subtractor
   * clojure.core/* multiplier
-  / clojure.core/- divider
+  / clojure.core// divider
   abs math/abs absolute-value
   square #(math/expt % 2) squarer
   sqrt math/sqrt sqrter
@@ -32,9 +36,48 @@
   and clojure.core/every? conjoiner
   or (complement clojure.core/not-any?) disjoiner)
 
+(defn conditional
+  [p if-true if-false output]
+  (propagator [p if-true if-false]
+              #(let [pred @p]
+                 (if (nothing? pred)
+                   'done
+                   (add-content output
+                                (if pred
+                                  @if-true
+                                  @if-false))))))
+(comment
+  (do
+   (def p (make-cell))
+   (def t (make-cell))
+   (def f (make-cell))
+   (def o (make-cell))
+
+   (conditional p t f o))
+
+ (add-content p false)
+ (add-content t 1)
+ (add-content f 2)
+ @o)
+
+(defn switch
+  [pred if-true output]
+  (conditional pred if-true (make-cell) output))
+
+(defn compound-propagator
+  [neighbors to-build]
+  (let [done? (atom false)]
+     (propagator neighbors
+                 #(if @done?
+                   'ok
+                   (if (every? nothing? (map deref neighbors))
+                     'ok
+                     (do
+                       (swap! done? (constantly true))
+                       (to-build)))))))
 
 (comment
-
+ ;; basic system
  (do
    (def a (make-cell))
    (def b (make-cell))
@@ -64,5 +107,5 @@
  @a
  @b
  @z
-)
+ )
 

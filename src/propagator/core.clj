@@ -30,8 +30,7 @@
 (defn make-cell
   []
   (agent nil
-         :validator (complement contradictory?)
-         :error-mode :continue))
+         :validator (complement contradictory?)))
 
 (defn new-neighbor!
   [cell neighbor]
@@ -39,15 +38,16 @@
 
 (defn add-content
   [cell increment]
-  (send cell merge increment))
+  (when-not (nothing? increment)
+    (send cell merge increment)))
 
 (defn propagator
   "Set up watchers and trigger initial 'change' for each neighbor"
   [neighbors to-do]
   (doseq [neighbor neighbors]
-    (add-watch neighbor (keyword (str (hash neighbors) "->" (hash neighbor)))
-               (fn [cell key old new] (if (not (= old new)) (to-do))))
-    (send neighbor identity)))
+    (add-watch neighbor (keyword (str (java.util.UUID/randomUUID)))
+               (fn [cell key old new] (when-not (= old new) (to-do)))))
+  (to-do))
 
 (defn lift-to-cell-contents
   [f]
