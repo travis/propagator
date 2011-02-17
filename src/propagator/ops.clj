@@ -23,7 +23,7 @@
   + clojure.core/+ adder
   - clojure.core/- subtractor
   * clojure.core/* multiplier
-  / clojure.core// divider
+  div clojure.core// divider
   abs math/abs absolute-value
   square #(math/expt % 2) squarer
   sqrt math/sqrt sqrter
@@ -35,6 +35,20 @@
   not clojure.core/not inverter
   and clojure.core/every? conjoiner
   or (complement clojure.core/not-any?) disjoiner)
+
+;; / is a weird token to refer to in namespaced situations
+(def / div)
+
+(defn product
+  [x y total]
+  (multiplier x y total)
+  (divider total x y)
+  (divider total y x))
+
+(defn quadratic
+  [x x2]
+  (squarer x x2)
+  (sqrter x2 x))
 
 (defn conditional
   [p if-true if-false output]
